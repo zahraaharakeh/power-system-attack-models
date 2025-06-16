@@ -1,0 +1,43 @@
+Unsupervised GCN Model Results
+=============================
+
+Dataset Information:
+Total samples: 482
+Training samples: 385
+Test samples: 97
+
+Model Configuration:
+- Architecture: GCN Autoencoder
+- Hidden dimensions: 64 -> 32 -> 16 -> 32 -> 64
+- Activation: ReLU
+- Dropout: 0.2
+
+Training Details:
+Final training loss: 0.139239
+Final validation loss: 0.028891
+Number of epochs trained: 1001
+
+Anomaly Detection Results:
+Reconstruction Error Threshold: 0.133923
+  - 95th percentile of reconstruction errors
+  - Samples with errors above this are considered anomalous
+
+Number of anomalies detected: 5
+  - Count of samples classified as anomalous
+
+Anomaly detection rate: 0.0515
+  - Proportion of samples classified as anomalous
+  - Expected to be around 0.05 (5%) with 95th percentile threshold
+
+Error Statistics:
+Mean reconstruction error: 0.033472
+  - Average reconstruction error across all samples
+
+Std reconstruction error: 0.065083
+  - Standard deviation of reconstruction errors
+
+Interpretation:
+1. The model learns to reconstruct normal patterns in the data
+2. Anomalies are detected when reconstruction error is high
+3. The threshold is set to identify the top 5% of errors as anomalies
+4. Lower mean reconstruction error indicates better model performance

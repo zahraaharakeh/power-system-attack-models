@@ -1,0 +1,10 @@
+Dataset Information:
+Total samples: 964
+Benign samples: 482
+Malicious samples: 482
+Feature shape: (964, 4)
+
+Attack Types:
+1. Random noise attack
+2. Scaling attack (amplification)
+3. Offset attack (value shifting)
