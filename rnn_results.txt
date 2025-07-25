@@ -1,0 +1,14 @@
+RNN Model Results
+==================================================
+
+Model Performance Metrics:
+Accuracy: 0.8212
+Precision: 0.8955
+Recall: 0.8212
+F1 Score: 0.8326
+ROC AUC: 0.8799
+
+
+Confusion Matrix:
+[[ 97   0]
+ [ 69 220]]

@@ -1,0 +1,24 @@
+Attention Autoencoder Model Results
+==================================================
+
+Model Performance Metrics:
+Accuracy: 0.4074
+Precision: 0.9409
+Recall: 0.3299
+F1 Score: 0.4885
+Reconstruction Error Threshold: 0.0367
+Optimal Threshold Percentile: 70
+
+Model Architecture:
+- Attention mechanism for feature importance
+- Auto-encoder with sophisticated encoding/decoding
+- Anomaly detection based on reconstruction error
+- Unsupervised learning approach
+
+Attack Types Detected:
+1. False Data Injection (FDI) - Subtle manipulation
+2. Replay Attack - Reuse of previous measurements
+3. Covert Attack - Maintains system observability
+4. Realistic Noise Attack - Proportional noise
+5. Targeted Attack - Focus on specific features
+6. Systematic Bias Attack - Add systematic bias

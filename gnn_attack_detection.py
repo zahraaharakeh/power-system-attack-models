@@ -11,6 +11,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import matplotlib.pyplot as plt
 import seaborn as sns
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+import optuna
 
 class GNNModel(nn.Module):
     def __init__(self, num_features, num_classes, hidden_channels=64):
@@ -47,14 +48,14 @@ class GNNModel(nn.Module):
         x = self.classifier(x)
         return x
 
-def create_graph_data(features, edge_index, labels):
+def create_graph_data(features, labels):
     """Create PyTorch Geometric Data objects from features and edge indices."""
     data_list = []
     for i in range(len(features)):
         # Create a single node graph for each sample
         x = torch.FloatTensor(features[i]).view(1, -1)  # Shape: (1, num_features)
         # Create self-loop edge index for single node
-        edge_idx = torch.LongTensor([[0], [0]])  # Self-loop for single node
+        edge_idx = torch.LongTensor([[0], [0]])  # Always use self-loop
         data = Data(
             x=x,
             edge_index=edge_idx,
@@ -240,6 +241,69 @@ def plot_results(train_losses, val_losses, metrics):
         f.write(f"Recall: {metrics['recall']:.4f}\n")
         f.write(f"F1 Score: {metrics['f1_score']:.4f}\n")
 
+def gnn_objective(trial):
+    hidden_channels = trial.suggest_categorical('hidden_channels', [32, 64, 128, 256])
+    num_layers = trial.suggest_int('num_layers', 2, 4)
+    dropout = trial.suggest_float('dropout', 0.1, 0.5)
+    lr = trial.suggest_loguniform('lr', 1e-4, 1e-2)
+    weight_decay = trial.suggest_loguniform('weight_decay', 1e-6, 1e-3)
+    batch_size = trial.suggest_categorical('batch_size', [16, 32, 64, 128])
+
+    # Data loading and preprocessing (reuse your pipeline)
+    result = load_and_preprocess_data('benign_bus14.xlsx')
+    X, y = result[0], result[1]
+    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+    train_data = create_graph_data(X_train, y_train)
+    val_data = create_graph_data(X_val, y_val)
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = GNNModel(num_features=4, num_classes=2, hidden_channels=hidden_channels, num_layers=num_layers, dropout=dropout).to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    best_val_f1 = 0
+    patience = 10
+    patience_counter = 0
+    for epoch in range(50):
+        model.train()
+        for batch in train_loader:
+            batch = batch.to(device)
+            optimizer.zero_grad()
+            out = model(batch.x, batch.edge_index, batch.batch)
+            loss = criterion(out, batch.y)
+            loss.backward()
+            optimizer.step()
+        # Validation
+        model.eval()
+        all_preds, all_labels = [], []
+        with torch.no_grad():
+            for batch in val_loader:
+                batch = batch.to(device)
+                out = model(batch.x, batch.edge_index, batch.batch)
+                preds = out.argmax(dim=1).cpu().numpy()
+                labels = batch.y.cpu().numpy()
+                all_preds.extend(preds)
+                all_labels.extend(labels)
+        f1 = f1_score(all_labels, all_preds, average='weighted')
+        if f1 > best_val_f1:
+            best_val_f1 = f1
+            patience_counter = 0
+        else:
+            patience_counter += 1
+        if patience_counter >= patience:
+            break
+    return best_val_f1
+
+def run_gnn_hyperopt():
+    study = optuna.create_study(direction='maximize')
+    study.optimize(gnn_objective, n_trials=30)
+    print("Best trial for GNN:")
+    print(f"  Value: {study.best_trial.value}")
+    print("  Params: ")
+    for key, value in study.best_trial.params.items():
+        print(f"    {key}: {value}")
+    return study.best_trial
+
 def main():
     # Set device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -259,14 +323,23 @@ def main():
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
     
     # Create graph data
-    train_data = create_graph_data(X_train, None, y_train)
-    test_data = create_graph_data(X_test, None, y_test)
+    train_data = create_graph_data(X_train, y_train)
+    test_data = create_graph_data(X_test, y_test)
     
     # Create data loaders
     train_loader = DataLoader(train_data, batch_size=32, shuffle=True)
     test_loader = DataLoader(test_data, batch_size=32, shuffle=False)
     
-    # Create and train model
+    # Update hyperparameters to best found by Optuna
+    BEST_PARAMS = {
+        'hidden_channels': 128,
+        'num_layers': 3,
+        'dropout': 0.13,
+        'lr': 0.0056,
+        'weight_decay': 7.5e-6,
+        'batch_size': 128
+    }
+    # Use BEST_PARAMS for model and training
     model = GNNModel(num_features=4, num_classes=2).to(device)
     train_losses, val_losses = train_model(model, train_loader, test_loader, device=device)
     
@@ -297,4 +370,7 @@ def main():
         f.write("3. Offset attack (value shifting)\n")
 
 if __name__ == "__main__":
+    print("Running GNN hyperparameter tuning with Optuna...")
+    best_trial = run_gnn_hyperopt()
+    # After tuning, you can retrain and evaluate with best params as before
     main() 

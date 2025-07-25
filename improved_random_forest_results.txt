@@ -1,0 +1,25 @@
+Improved Random Forest Model Results
+==================================================
+
+Model Performance Metrics:
+Accuracy: 0.6995
+Precision: 0.6998
+Recall: 0.6995
+F1 Score: 0.6993
+ROC AUC: 0.7241
+
+Feature Importance:
+Pd_new: 0.1669
+Qd_new: 0.1523
+Vm: 0.4630
+Va: 0.2178
+
+Confusion Matrix:
+[[70 27]
+ [31 65]]
+
+Attack Types Implemented:
+1. False Data Injection (FDI) - Subtle manipulation of measurements
+2. Replay Attack - Reuse of previous measurements with noise
+3. Covert Attack - Maintains system observability
+4. Realistic Noise Attack - Proportional noise based on measurement type
