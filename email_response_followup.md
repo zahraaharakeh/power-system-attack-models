@@ -57,6 +57,7 @@ You're absolutely correct - the 3:1 imbalance (482 benign vs 1,446 malicious) is
    - Focus on learning rate, hidden dimensions, dropout
 
 2. **Advanced GNN Architectures:**
+
    - Graph Attention Networks (GAT)
    - GraphSAGE implementation
    - Variational Graph Autoencoder (VGAE)
