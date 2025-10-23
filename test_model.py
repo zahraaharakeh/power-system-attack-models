@@ -1,44 +1,45 @@
 import torch
-import torch.nn as nn
 import numpy as np
-from attention_autoencoder import AttentionAutoencoder
+import warnings
+warnings.filterwarnings('ignore')
 
-print("Testing AttentionAutoencoder model...")
+def test_model():
+    print("Testing Enhanced Unsupervised Graph Informer...")
+    
+    try:
+        from enhanced_unsupervised_graph_informer import (
+            EnhancedUnsupervisedGraphInformer,
+            create_power_system_graph
+        )
+        
+        # Create model
+        model = EnhancedUnsupervisedGraphInformer(
+            input_dim=4,
+            d_model=128,
+            n_heads=4,
+            n_layers=2,
+            seq_len=12,
+            num_nodes=14
+        )
+        
+        # Create graph
+        edge_index = create_power_system_graph(num_nodes=14)
+        
+        # Test forward pass
+        x = torch.randn(2, 12, 4)
+        
+        with torch.no_grad():
+            outputs = model(x, edge_index, return_detailed_output=True)
+        
+        print("Model test successful!")
+        print(f"Reconstructed global shape: {outputs['reconstructed_global'].shape}")
+        print(f"Ensemble score shape: {outputs['ensemble_score'].shape}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"Model test failed: {e}")
+        return False
 
-try:
-    # Create a simple test model
-    input_dim = 4
-    hidden_dims = [128, 64]
-    latent_dim = 32
-    attention_dim = 64
-    
-    model = AttentionAutoencoder(
-        input_dim=input_dim,
-        hidden_dims=hidden_dims,
-        latent_dim=latent_dim,
-        attention_dim=attention_dim
-    )
-    
-    print(f"Model created successfully!")
-    print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
-    
-    # Test forward pass
-    batch_size = 16
-    x = torch.randn(batch_size, input_dim)
-    
-    print(f"Input shape: {x.shape}")
-    
-    # Forward pass
-    reconstructed, latent, attention_weights = model(x)
-    
-    print(f"Reconstructed shape: {reconstructed.shape}")
-    print(f"Latent shape: {latent.shape}")
-    print(f"Attention weights shape: {attention_weights.shape}")
-    
-    print("Forward pass successful!")
-    print("Model test passed!")
-    
-except Exception as e:
-    print(f"Error occurred: {e}")
-    import traceback
-    traceback.print_exc() 
+if __name__ == "__main__":
+    test_model()
